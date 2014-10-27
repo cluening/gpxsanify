@@ -11,6 +11,9 @@ lasttimestruct = 0
 def main():
   inputfile = '/Users/cluening/GPS/GPX/Archive/2014-10-17 09.32.04 Day.gpx'
   inputfile = '/Users/cluening/GPS/bayobench.gpx'
+  inputfile = '/Users/cluening/GPS/GPX/Archive/2014-10-03 10.57.04 Day.gpx'
+  inputfile = '/Users/cluening/GPS/GPX/Archive/2014-07-19 11.19.34 Day.gpx'
+  inputfile = '/Users/cluening/GPS/GPX/Archive/2014-09-17 17.36.06 Day.gpx'
 
   tree = elementtree.parse(inputfile)
 
@@ -26,26 +29,31 @@ def doelement(element):
   global lasttimestruct
 
   if element.tag.endswith("trk"):
-    print "Foo!"
+    print "New track!"
     lastlat = 500
     lastlon = 500
     lasttimestruct = 0
 
   if element.tag.endswith("trkpt"):
-    print element.attrib
-    print lastlat
+    #print element.attrib
+    #print lastlat
 
     timeelement = element.find("{%s}time" % namespace)
-    timestruct = time.strptime(timeelement.text, "%Y-%d-%mT%H:%M:%SZ")
+    timestruct = time.strptime(timeelement.text, "%Y-%m-%dT%H:%M:%SZ")
     lat = float(element.attrib['lat'])
     lon = float(element.attrib['lon'])
  
     if(lastlat < 500 and lastlon < 500):
-      print "Have a comparison!"
+      #print "Have a comparison!"
       timediff = time.mktime(timestruct) - time.mktime(lasttimestruct)
       distdiff = haversine(lon, lat, lastlon, lastlat)
-      print("Time difference: %f seconds" % timediff)
-      print("Dist difference: %f kilometers" % distdiff)
+      #print("Time difference: %f seconds" % timediff)
+      #print("Dist difference: %f kilometers" % distdiff)
+      #print("Speed: %f km/s" % (distdiff/timediff))
+
+      # Speed of sound: 343 m/s
+      if distdiff/timediff > .343:
+        print("Absurd speed! %f km/s" % (distdiff/timediff))
       
     lastlat = lat
     lastlon = lon
