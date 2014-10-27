@@ -2,37 +2,43 @@
 
 import xml.etree.ElementTree as elementtree
 import math, time
+import sys
 
 namespace = "http://www.topografix.com/GPX/1/1"
 lastlat = 500
 lastlon = 500
-lasttimestruct = 0
+lasttimestruct = None
+lasttrkpt = None
 
 def main():
   inputfile = '/Users/cluening/GPS/GPX/Archive/2014-10-17 09.32.04 Day.gpx'
   inputfile = '/Users/cluening/GPS/bayobench.gpx'
   inputfile = '/Users/cluening/GPS/GPX/Archive/2014-10-03 10.57.04 Day.gpx'
-  inputfile = '/Users/cluening/GPS/GPX/Archive/2014-07-19 11.19.34 Day.gpx'
-  inputfile = '/Users/cluening/GPS/GPX/Archive/2014-09-17 17.36.06 Day.gpx'
+#  inputfile = '/Users/cluening/GPS/GPX/Archive/2014-07-19 11.19.34 Day.gpx'
+#  inputfile = '/Users/cluening/GPS/GPX/Archive/2014-09-17 17.36.06 Day.gpx'
+#  inputfile = '/Users/cluening/GPS/gpx.etrex/20100713.gpx'
 
   tree = elementtree.parse(inputfile)
 
-  doelement(tree.getroot())
+  doelement(tree.getroot(), None)
 
+  tree.write("/Users/cluening/foo.gpx")
 
 ##
 # doelement()
 ##
-def doelement(element):
+def doelement(element, parent):
   global lastlat
   global lastlon
   global lasttimestruct
+  global lasttrkpt
 
   if element.tag.endswith("trk"):
     print "New track!"
     lastlat = 500
     lastlon = 500
-    lasttimestruct = 0
+    lasttimestruct = None
+    lasttrkpt = None
 
   if element.tag.endswith("trkpt"):
     #print element.attrib
@@ -54,10 +60,14 @@ def doelement(element):
       # Speed of sound: 343 m/s
       if distdiff/timediff > .343:
         print("Absurd speed! %f km/s" % (distdiff/timediff))
+        print parent
+        parent.remove(lasttrkpt)
+        print("Removed")
       
     lastlat = lat
     lastlon = lon
     lasttimestruct = timestruct
+    lasttrkpt = element
 
 #  timestruct1 = time.strptime(timestamp1, "%Y-%d-%mT%H:%M:%SZ")
 #  time.mktime(timestruct2) - time.mktime(timestruct1)
@@ -67,7 +77,7 @@ def doelement(element):
 #  print element.text
 
   for child in element:
-    doelement(child)
+    doelement(child, element)
 
 ##
 ##  haversine() function.  Stolen from stacktrace
