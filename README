@@ -1,0 +1,2 @@
+Just a little script that cleans up gpx files some.  Feature list:
+ - Remove points that result in absurd speeds
