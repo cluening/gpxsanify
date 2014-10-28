@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 import xml.etree.ElementTree as elementtree
-import math, time
-import sys
+import math, time, sys, os
 
 namespace = "http://www.topografix.com/GPX/1/1"
 lastlat = 500
@@ -11,18 +10,27 @@ lasttimestruct = None
 lasttrkpt = None
 
 def main():
-  inputfile = '/Users/cluening/GPS/GPX/Archive/2014-10-17 09.32.04 Day.gpx'
+  inputdir = "/Users/cluening/GPS/GPX/Archive"
+  outputdir = inputdir + ".sanified"
   inputfile = '/Users/cluening/GPS/bayobench.gpx'
-  inputfile = '/Users/cluening/GPS/GPX/Archive/2014-10-03 10.57.04 Day.gpx'
-#  inputfile = '/Users/cluening/GPS/GPX/Archive/2014-07-19 11.19.34 Day.gpx'
-#  inputfile = '/Users/cluening/GPS/GPX/Archive/2014-09-17 17.36.06 Day.gpx'
-#  inputfile = '/Users/cluening/GPS/gpx.etrex/20100713.gpx'
+  inputfile = '/Users/cluening/GPS/gpx.etrex/20100713.gpx'
+  inputfile = '2014-09-17 17.36.06 Day.gpx'
 
-  tree = elementtree.parse(inputfile)
+  try:
+    os.mkdir(outputdir)
+  except OSError:
+    print "Directory already exists"
 
-  doelement(tree.getroot(), None)
+#  elementtree.register_namespace('', "http://www.topografix.com/GPX/1/0")
+  elementtree.register_namespace('', "http://www.topografix.com/GPX/1/1")
 
-  tree.write("/Users/cluening/foo.gpx")
+#  for inputfile in [inputfile]:
+  for inputfile in os.listdir(inputdir):
+    if inputfile.endswith(".gpx"):
+      print(inputfile)
+      tree = elementtree.parse(inputdir + "/" + inputfile)
+      doelement(tree.getroot(), None)
+      tree.write(outputdir + "/" + inputfile)
 
 ##
 # doelement()
@@ -33,8 +41,7 @@ def doelement(element, parent):
   global lasttimestruct
   global lasttrkpt
 
-  if element.tag.endswith("trk"):
-    print "New track!"
+  if element.tag.endswith("trk") or element.tag.endswith("trkseg"):
     lastlat = 500
     lastlon = 500
     lasttimestruct = None
@@ -58,8 +65,10 @@ def doelement(element, parent):
       #print("Speed: %f km/s" % (distdiff/timediff))
 
       # Speed of sound: 343 m/s
-      if distdiff/timediff > .343:
+      # 150 mph = .067 km/s
+      if distdiff/timediff > .067:
         print("Absurd speed! %f km/s" % (distdiff/timediff))
+        print("%f, %f" % (lat, lon))
         print parent
         parent.remove(lasttrkpt)
         print("Removed")
