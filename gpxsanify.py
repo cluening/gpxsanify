@@ -141,13 +141,6 @@ def doelement(element, parent, namespace):
     lasttimestruct = timestruct
     lasttrkpt = element
 
-#  timestruct1 = time.strptime(timestamp1, "%Y-%d-%mT%H:%M:%SZ")
-#  time.mktime(timestruct2) - time.mktime(timestruct1)
-
-#  print element.tag
-#  print element.attrib
-#  print element.text
-
   for child in element:
     doelement(child, element, namespace)
 
