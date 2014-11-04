@@ -10,6 +10,8 @@ import argparse
 # - absurd speed (default to speed of sound)
 # - single file
 
+args = None
+debuglevel = 1
 namespaces = ["http://www.topografix.com/GPX/1/0",
               "http://www.topografix.com/GPX/1/1"]
 lastlat = 500
@@ -18,6 +20,7 @@ lasttimestruct = None
 lasttrkpt = None
 
 def main():
+  global args
   #inputdir = "/Users/cluening/GPS/GPX/Archive"
   #outputdir = inputdir + ".sanified"
   #inputfile = '/Users/cluening/GPS/bayobench.gpx'
@@ -34,27 +37,25 @@ def main():
                       help="Input directory to search for GPX files")
   parser.add_argument('--outputdir', dest='outputdir', action='store', 
                       help="Output directory for sanified GPX files")
+  parser.add_argument('--debuglevel', dest='debuglevel', action='store',
+                      help="Debug level", default=0)
   args = parser.parse_args()
 
   # Verify the option input
   if args.inputfile == None and args.inputdir == None:
-    print("Need an input file or input directory")
-    sys.exit(1)
+    error("Need an input file or input directory", 1)
   if args.inputfile != None and args.inputdir != None:
-    print("Can't do both a single file and a directory at the same time")
-    sys.exit(1)
+    error("Can't do both a single file and a directory at the same time", 1)
   if args.inputfile != None and args.outputfile == None:
-    print("Need to specify an output file with an input file")
-    sys.exit(1)
+    error("Need to specify an output file with an input file", 1)
   if args.inputdir != None and args.outputdir == None:
-    print("Need to specify an output directory with an input directory")
-    sys.exit(1)
+    error("Need to specify an output directory with an input directory", 1)
 
   if args.outputdir != None:
     try:
       os.mkdir(args.outputdir)
     except OSError:
-      print "Directory already exists"
+      warn("Directory already exists")
   else:
     # We didn't get an output directory, so we must be doing a single
     # file with a full path
@@ -67,16 +68,15 @@ def main():
     try:
       inputfiles = os.listdir(args.inputdir)
     except OSError as detail:
-      print "Error opening %s: %s" % (args.inputdir, detail)
-      sys.exit(1)
+      error("Error opening %s: %s" % (args.inputdir, detail), 1)
 
   for inputfile in inputfiles:
     if inputfile.endswith(".gpx"):
-      print(inputfile)
+      debug(inputfile)
       try:
         tree = elementtree.parse(os.path.join(args.inputdir, inputfile))
       except elementtree.ParseError as detail:
-        print("Bad file: %s: %s" % (inputfile, detail))
+        warn("Bad file: %s: %s" % (inputfile, detail))
         continue
 #      tree.write(sys.stdout)
 
@@ -84,11 +84,10 @@ def main():
         elementtree.register_namespace('', namespace)
         trkpts = tree.getroot().findall("{%s}trk" % namespace)
         if len(trkpts) > 0:
-          #print("Good namespace: %s" % namespace)
+          debug("Good namespace: %s" % namespace)
           break
       else:
-        # FIXME: should be a warning
-        print("Couldn't find any valid namespaces")
+        warn("Couldn't find any valid namespaces in %s" % (filename))
         continue
 
       doelement(tree.getroot(), None, namespace)
@@ -98,7 +97,7 @@ def main():
         tree.write(os.path.join(args.outputdir, inputfile))
 
 ##
-# doelement()
+## doelement()
 ##
 def doelement(element, parent, namespace):
   global lastlat
@@ -127,13 +126,14 @@ def doelement(element, parent, namespace):
       distdiff = haversine(lon, lat, lastlon, lastlat)
       #print("Time difference: %f seconds" % timediff)
       #print("Dist difference: %f kilometers" % distdiff)
-      #print("Speed: %f km/s" % (distdiff/timediff))
+
+      debug("Speed: %f km/s" % (distdiff/timediff))
 
       # Speed of sound: 343 m/s
       # 150 mph = .067 km/s
       if distdiff/timediff > .067:
-        print("Absurd speed! %f km/s" % (distdiff/timediff))
-        print("%f, %f" % (lat, lon))
+        debug("Absurd speed! %f km/s" % (distdiff/timediff))
+        debug("%f, %f" % (lat, lon))
         parent.remove(lasttrkpt)
       
     lastlat = lat
@@ -150,6 +150,26 @@ def doelement(element, parent, namespace):
 
   for child in element:
     doelement(child, element, namespace)
+
+##
+## debug()
+## 
+def debug(message):
+  if args.debuglevel > 0:
+    sys.stderr.write(message + "\n")
+
+##
+## warn()
+##
+def warn(message):
+  sys.stderr.write(message + "\n")
+
+##
+## error()
+##
+def error(message, exitcode):
+  sys.stderr.write(message + "\n")
+  sys.exit(exitcode)
 
 ##
 ##  haversine() function.  Stolen from stackoverflow
