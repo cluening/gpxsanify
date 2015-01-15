@@ -87,7 +87,7 @@ def main():
           debug("Good namespace: %s" % namespace)
           break
       else:
-        warn("Couldn't find any valid namespaces in %s" % (filename))
+        warn("Couldn't find any valid namespaces in %s" % (inputfile))
         continue
 
       doelement(tree.getroot(), None, namespace)
