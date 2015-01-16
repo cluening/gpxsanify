@@ -5,10 +5,8 @@ import math, time, sys, os
 import argparse
 
 # Command line options to include:
-# - inputdir
-# - outputdir
 # - absurd speed (default to speed of sound)
-# - single file
+# - iterate until no more changes
 
 args = None
 debuglevel = 1
@@ -18,9 +16,11 @@ lastlat = 500
 lastlon = 500
 lasttimestruct = None
 lasttrkpt = None
+filechanged = True  # Set to true to ensure at least one pass through doelement()
 
 def main():
   global args
+  global filechanged
   #inputdir = "/Users/cluening/GPS/GPX/Archive"
   #outputdir = inputdir + ".sanified"
   #inputfile = '/Users/cluening/GPS/bayobench.gpx'
@@ -73,6 +73,7 @@ def main():
   for inputfile in inputfiles:
     if inputfile.endswith(".gpx"):
       debug(inputfile)
+      filechanged = True
       try:
         tree = elementtree.parse(os.path.join(args.inputdir, inputfile))
       except elementtree.ParseError as detail:
@@ -90,7 +91,10 @@ def main():
         warn("Couldn't find any valid namespaces in %s" % (inputfile))
         continue
 
-      doelement(tree.getroot(), None, namespace)
+      while filechanged != False:
+        filechanged = False
+        doelement(tree.getroot(), None, namespace)
+
       if args.outputfile != None:
         tree.write(args.outputfile)
       else:
@@ -104,6 +108,7 @@ def doelement(element, parent, namespace):
   global lastlon
   global lasttimestruct
   global lasttrkpt
+  global filechanged
 
   if element.tag.endswith("trk") or element.tag.endswith("trkseg"):
     lastlat = 500
@@ -135,6 +140,7 @@ def doelement(element, parent, namespace):
         debug("Absurd speed! %f km/s" % (distdiff/timediff))
         debug("%f, %f" % (lat, lon))
         parent.remove(lasttrkpt)
+        filechanged = True
       
     lastlat = lat
     lastlon = lon
