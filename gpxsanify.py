@@ -51,6 +51,9 @@ def main():
   if args.inputdir != None and args.outputdir == None:
     error("Need to specify an output directory with an input directory", 1)
 
+  if args.inputdir == None:
+    args.inputdir = ""
+
   if args.outputdir != None:
     try:
       os.mkdir(args.outputdir)
