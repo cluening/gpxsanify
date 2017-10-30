@@ -120,8 +120,8 @@ def doelement(element, parent, namespace):
     lasttrkpt = None
 
   if element.tag.endswith("trkpt"):
-    #print element.attrib
-    #print lastlat
+    #print(element.attrib)
+    #print(lastlat)
 
     timeelement = element.find("{%s}time" % namespace)
     timestruct = time.strptime(timeelement.text, "%Y-%m-%dT%H:%M:%SZ")
@@ -129,7 +129,7 @@ def doelement(element, parent, namespace):
     lon = float(element.attrib['lon'])
  
     if(lastlat < 500 and lastlon < 500):
-      #print "Have a comparison!"
+      #print("Have a comparison!")
       timediff = time.mktime(timestruct) - time.mktime(lasttimestruct)
       distdiff = haversine(lon, lat, lastlon, lastlat)
       #print("Time difference: %f seconds" % timediff)
